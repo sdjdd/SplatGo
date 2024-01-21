@@ -1,23 +1,32 @@
 using Godot;
 using System;
+using System.Linq;
 using System.Reactive.Linq;
 using static KeyMove;
 
 public partial class Board : Node2D
 {
-  private
-  const int Size = 13; // 棋盘大小
-  private
-  const int CellSize = 46; // 每个单元格的像素大小
-  private
-  const int BorderSize = 2; // 边框大小
+  private const int Size = 13; // 棋盘大小
+  private const int CellSize = 46; // 每个单元格的像素大小
+  private const int BorderSize = 2; // 边框大小
 
-  private Color ColorA = new(0xfaa66cff);
-  private Color ColorB = new(0x72d8ddff);
+  private static Color ColorA = new(0xa9dbdeff);
+  private static Color ColorB = new(0xfad0b1ff);
+  private static Color ColorBlank = Colors.White;
 
-  private readonly Game game = new(Size, 2);
+  private static Color[] PlayerColors = new Color[] {
+  new(0xfaa66cff),
+  new(0x72d8ddff),
+  new(0xe98585ff),
+  new(0x74a1efff),
+  new(0xffcc66ff),
+  new(0x97df8bff),
+  };
 
-  private ColorRect[] cells = new ColorRect[Size * Size];
+  private const int PlayerCount = 2;
+  private readonly Game game = new(Size, PlayerCount);
+
+  private static ColorRect[] cells = new ColorRect[Size * Size];
 
   private readonly KeyMoveController keyMoveController1 = new(Key.W, Key.S, Key.A, Key.D);
   private readonly KeyMoveController keyMoveController2 = new(Key.Up, Key.Down, Key.Left, Key.Right);
@@ -34,7 +43,7 @@ public partial class Board : Node2D
   // Called every frame. 'delta' is the elapsed time since the previous frame.
   public override void _Process(double delta)
   {
-    Paint();
+    Paint(game);
   }
 
   public override void _Input(InputEvent @event)
@@ -49,7 +58,7 @@ public partial class Board : Node2D
     var background = new ColorRect
     {
       Size = new Vector2(boardWidth, boardWidth),
-      Color = new Color(1, 1, 1, (float)0.75)
+      Color = new Color(1, 1, 1, (float)0.6)
     };
     AddChild(background);
 
@@ -69,17 +78,23 @@ public partial class Board : Node2D
     }
   }
 
+
+  private static Color[] CellColors = new Color[] { ColorA, ColorBlank, ColorB }.Concat(PlayerColors).ToArray();
   private int[] previousStatus = new int[Size * Size];
-  private void Paint()
+  private void Paint(Game game)
   {
+    var currentStatus = (int[])game.Status.Clone();
+    for (int i = 0; i < game.PlayerPositions.Length; i++)
+    {
+      currentStatus[game.PlayerPositions[i]] = i + 2;
+    }
     for (int i = 0; i < game.Status.Length; i++)
     {
-      var currentStatus = game.Status[i];
-      if (previousStatus[i] != game.Status[i])
+      if (previousStatus[i] != currentStatus[i])
       {
-        cells[i].Color = currentStatus == 0 ? Colors.White : currentStatus == 1 ? ColorA : ColorB;
+        cells[i].Color = CellColors[currentStatus[i] + 1];
       }
     }
-    previousStatus = (int[])game.Status.Clone();
+    previousStatus = currentStatus;
   }
 }
