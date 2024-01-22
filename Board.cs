@@ -38,6 +38,9 @@ public partial class Board : Node2D
 
     keyMoveController1.Moves.Subscribe(move => game.Move(0, move));
     keyMoveController2.Moves.Subscribe(move => game.Move(1, move));
+
+    // TODO: implement 准备阶段
+    game.Start();
   }
 
   // Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -83,12 +86,13 @@ public partial class Board : Node2D
   private int[] previousStatus = new int[Size * Size];
   private void Paint(Game game)
   {
-    var currentStatus = (int[])game.Status.Clone();
+    var currentStatus = (int[])game.Occupations.Clone();
     for (int i = 0; i < game.PlayerPositions.Length; i++)
     {
+      // TODO: 如果 P1 P2 在同一个位置，展示时 P2 会稳定覆盖 P1，而非按照进入的先后（染色是对的）。可能需要一个更好的展示方式。
       currentStatus[game.PlayerPositions[i]] = i + 2;
     }
-    for (int i = 0; i < game.Status.Length; i++)
+    for (int i = 0; i < game.Occupations.Length; i++)
     {
       if (previousStatus[i] != currentStatus[i])
       {

@@ -1,21 +1,42 @@
 using System;
+using System.Threading.Tasks;
 
 public class Game
 {
 	public int Size { get; private set; }
-	public int[] Status;
+	public static TimeSpan Duration = TimeSpan.FromSeconds(30);
+	public static TimeSpan CountDownDuration = TimeSpan.FromSeconds(3);
+	public enum GameStatus
+	{
+		Initial,
+		Counting,
+		Ongoing,
+		Ended,
+	}
+	public GameStatus Status = GameStatus.Initial;
+	public int[] Occupations;
 	public int[] PlayerPositions;
 	public Game(int size, int playerCount)
 	{
 		Size = size;
-		Status = new int[size * size];
-		Array.Fill(Status, 0);
+		Occupations = new int[size * size];
+		Array.Fill(Occupations, 0);
 		PlayerPositions = new int[playerCount];
-		PlayerPositions[0] = Status.Length / 2 - 3; PlayerPositions[1] = Status.Length / 2 + 3;
+		PlayerPositions[0] = Occupations.Length / 2 - 3; PlayerPositions[1] = Occupations.Length / 2 + 3;
 		for (int i = 0; i < playerCount; i++)
 		{
-			Move(i, Direction.Still, Direction.Still);
+			UpdateOccupation(i, PlayerPositions[i]);
 		}
+	}
+
+	public async void Start()
+	{
+		Status = GameStatus.Counting;
+		await Task.Delay(CountDownDuration);
+		Status = GameStatus.Ongoing;
+		await Task.Delay(Duration);
+		Status = GameStatus.Ended;
+		CheckVictory();
 	}
 
 	public enum Direction
@@ -52,11 +73,45 @@ public class Game
 
 	public bool Move(int playerId, Direction x, Direction y)
 	{
+		if (Status != GameStatus.Ongoing)
+		{
+			return false;
+		}
+		var previousPosition = PlayerPositions[playerId];
+		// TODO: implement boundry
 		var newPosition = (PlayerPositions[playerId] + (int)x + (int)y * Size + Size * Size) % (Size * Size);
+		if (previousPosition == newPosition)
+		{
+			return false;
+		}
 		PlayerPositions[playerId] = newPosition;
-		Status[newPosition] = playerId % 2 == 0 ? 1 : -1;
+		var occupationChanges = UpdateOccupation(playerId, newPosition);
+		if (occupationChanges)
+		{
+			FillClosedArea(newPosition);
+			CheckVictory();
+		}
 		return true;
 	}
+
+	private bool UpdateOccupation(int playerId, int position)
+	{
+		var previousOccupation = Occupations[position];
+		var newOccupation = playerId % 2 == 0 ? 1 : -1;
+		Occupations[position] = newOccupation;
+		return previousOccupation != newOccupation;
+	}
+
+	private void FillClosedArea(int startPoint)
+	{
+		// TODO: implement FillClosedArea
+	}
+
+	private void CheckVictory()
+	{
+		// TODO: implement 胜利条件
+	}
+
 	public bool Move(int playerId, int code)
 	{
 		var step = new Step(code);
