@@ -15,12 +15,12 @@ public partial class Board : Node2D
   private static Color ColorBlank = Colors.White;
 
   private static Color[] PlayerColors = new Color[] {
-  new(0xfaa66cff),
-  new(0x72d8ddff),
-  new(0xe98585ff),
-  new(0x74a1efff),
-  new(0xffcc66ff),
-  new(0x97df8bff),
+    new(0xfaa66cff),
+    new(0x72d8ddff),
+    new(0xe98585ff),
+    new(0x74a1efff),
+    new(0xffcc66ff),
+    new(0x97df8bff),
   };
 
   private const int PlayerCount = 2;
@@ -36,8 +36,10 @@ public partial class Board : Node2D
   {
     GenerateBoard();
 
-    keyMoveController1.Moves.Subscribe(move => game.Move(0, move));
-    keyMoveController2.Moves.Subscribe(move => game.Move(1, move));
+    game.Bind(new IObservable<int>[] {
+      keyMoveController1.Moves,
+        keyMoveController2.Moves,
+    });
 
     // TODO: implement 准备阶段
     game.Start();
@@ -81,8 +83,11 @@ public partial class Board : Node2D
     }
   }
 
-
-  private static Color[] CellColors = new Color[] { ColorA, ColorBlank, ColorB }.Concat(PlayerColors).ToArray();
+  private static Color[] CellColors = new Color[] {
+    ColorA,
+    ColorBlank,
+    ColorB
+  }.Concat(PlayerColors).ToArray();
   private int[] previousStatus = new int[Size * Size];
   private void Paint(Game game)
   {

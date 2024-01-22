@@ -103,7 +103,7 @@ public class KeyMove
           timer = new System.Threading.Timer((_) =>
           {
             echoedMoveSubject.OnNext(move);
-          }, null, 490, 500); // dueTime 需要比 period 短一点，否则后面 Sample 的时候容易漏拍
+          }, null, 90, 100); // dueTime 需要比 period 短一点，否则后面 Sample 的时候容易漏拍
         }
 
         // 去掉多个按键组合时产生的中间态 Move，比如 ↗️(→+↑) 之前会先触发一次 →
@@ -133,24 +133,7 @@ public class KeyMove
         lastMove = move;
       });
 
-      var echoedMoves = echoedMoveSubject.AsObservable();
-      echoedMoves.Subscribe(m => GD.Print(m));
-
-      var sampledMoves = Observable.Create<int>(observer =>
-        echoedMoves.Sample(echoedMoves.SkipWhile(move => move == 0).FirstAsync().Concat(
-          Observable.Interval(TimeSpan.FromMilliseconds(500)).Select(_ => (int)1))).TakeUntil(move => move == 0).Subscribe(
-          onNext: observer.OnNext,
-          onError: observer.OnError,
-          onCompleted: observer.OnCompleted)
-        )
-        .Repeat() // 当序列完成时（即遇到了0），使用Repeat操作符重新订阅源序列
-      ;
-      return sampledMoves;
+      return echoedMoveSubject;
     }
-  }
-
-  public static KeyMoveController Bind(Key up, Key down, Key left, Key right)
-  {
-    return new KeyMoveController(up, down, left, right);
   }
 }
