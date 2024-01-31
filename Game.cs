@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
@@ -11,13 +12,18 @@ public class Game
     get;
     private set;
   }
+  public byte PlayersCount
+  {
+    get;
+    private set;
+  }
   public static TimeSpan Duration = TimeSpan.FromSeconds(30);
-  public static TimeSpan CountDownDuration = TimeSpan.FromSeconds(3);
+  public static TimeSpan StandbyDuration = TimeSpan.FromSeconds(3);
   public static TimeSpan StepInterval = TimeSpan.FromMilliseconds(500);
   public enum GameStatus
   {
     Initial,
-    Counting,
+    Standby,
     Ongoing,
     Ended,
   }
@@ -36,26 +42,34 @@ public class Game
   }
   public int[] Occupations;
   public int[] PlayerPositions;
+  public int Team1Score = 0;
+  public int Team2Score = 0;
   private ISubject<GameStatus> GameStatusSubject = new Subject<GameStatus>();
-  public Game(int size, int playerCount)
+  public Game(int size, byte playerCount)
   {
     Size = size;
+    PlayersCount = playerCount;
     Occupations = new int[size * size];
+    Reset();
+  }
+
+  public void Reset()
+  {
     Array.Fill(Occupations, 0);
-    PlayerPositions = new int[playerCount];
+    PlayerPositions = new int[PlayersCount];
     PlayerPositions[0] = Occupations.Length / 2 - 3;
     PlayerPositions[1] = Occupations.Length / 2 + 3;
-    for (int i = 0; i < playerCount; i++)
+    for (int i = 0; i < PlayersCount; i++)
     {
       UpdateOccupation(i, PlayerPositions[i]);
     }
     Status = GameStatus.Initial;
   }
 
-  public void Bind(IObservable<int>[] inputStreams)
+  public IObservable<int>[] Bind(IObservable<int>[] inputStreams)
   {
     var startStream = GameStatusSubject.Where(status => status == GameStatus.Ongoing).Take(1);
-    inputStreams.Select((inputStream, i) =>
+    return inputStreams.Select((inputStream, i) =>
     {
       Subject<int> trimmedInput = new();
       inputStream.CombineLatest(startStream, (input, start) => input).Subscribe(trimmedInput);
@@ -67,14 +81,15 @@ public class Game
             .Concat(Observable.Interval(TimeSpan.FromMilliseconds(500)).Select(_ => (int)1))
           ).TakeUntil(move => move == 0).Subscribe(observer))
         .Repeat(); // 当序列完成时（即遇到了0），使用Repeat操作符重新订阅源序列
-      return sampledMoves.Subscribe(move => Move(i, move));
+      sampledMoves.Subscribe(move => Move(i, move));
+      return sampledMoves;
     }).ToArray();
   }
 
   public async void Start()
   {
-    Status = GameStatus.Counting;
-    await Task.Delay(CountDownDuration);
+    Status = GameStatus.Standby;
+    await Task.Delay(StandbyDuration);
     Status = GameStatus.Ongoing;
     await Task.Delay(Duration);
     Status = GameStatus.Ended;
@@ -136,6 +151,7 @@ public class Game
     if (occupationChanges)
     {
       FillClosedArea(newPosition);
+      CalculateScore();
       CheckVictory();
     }
     return true;
@@ -152,6 +168,19 @@ public class Game
   private void FillClosedArea(int startPoint)
   {
     // TODO: implement FillClosedArea
+  }
+
+  private void CalculateScore()
+  {
+    var score1 = 0;
+    var score2 = 0;
+    foreach (var o in Occupations)
+    {
+      if (o == 1) { score1++; }
+      else if (o == -1) { score2++; }
+    }
+    Team1Score = score1;
+    Team2Score = score2;
   }
 
   private void CheckVictory()

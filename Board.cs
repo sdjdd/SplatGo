@@ -36,13 +36,35 @@ public partial class Board : Node2D
   {
     GenerateBoard();
 
+    BindNodes();
+
+
     game.Bind(new IObservable<int>[] {
       keyMoveController1.Moves,
         keyMoveController2.Moves,
-    });
+    }).Select((moveStream, i) => moveStream.FirstAsync().Subscribe(_ => CallDeferred("HideHintDeferred", i))).ToArray();
 
     // TODO: implement 准备阶段
     game.Start();
+  }
+
+  private void HideHintDeferred(int i)
+  {
+    var hint = GetNode<Control>($"VBoxContainer/Board/CtrHints{i}");
+    if (hint != null)
+    {
+      hint.Visible = false;
+    }
+  }
+
+  private Label TimerNode;
+  private Label Team1ScoreNode;
+  private Label Team2ScoreNode;
+  private void BindNodes()
+  {
+    TimerNode = GetNode<Label>("VBoxContainer/HBoxContainer/Timer");
+    Team1ScoreNode = GetNode<Label>("VBoxContainer/HBoxContainer/Team1Score");
+    Team2ScoreNode = GetNode<Label>("VBoxContainer/HBoxContainer/Team2Score");
   }
 
   // Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -65,7 +87,9 @@ public partial class Board : Node2D
       Size = new Vector2(boardWidth, boardWidth),
       Color = new Color(1, 1, 1, (float)0.6)
     };
-    AddChild(background);
+    var boardNode = GetNode<Control>("VBoxContainer/Board");
+
+    boardNode.AddChild(background);
 
     for (int i = 0; i < Size; i++)
     {
@@ -78,7 +102,7 @@ public partial class Board : Node2D
           Position = new Vector2(j * (CellSize + BorderSize) + BorderSize, i * (CellSize + BorderSize) + BorderSize)
         };
         cells[i * Size + j] = cell;
-        AddChild(cell); // 将cell作为子节点添加到棋盘节点
+        boardNode.AddChild(cell); // 将cell作为子节点添加到棋盘节点
       }
     }
   }
@@ -89,8 +113,12 @@ public partial class Board : Node2D
     ColorB
   }.Concat(PlayerColors).ToArray();
   private int[] previousStatus = new int[Size * Size];
+
   private void Paint(Game game)
   {
+    Team1ScoreNode.Text = game.Team1Score.ToString();
+    Team2ScoreNode.Text = game.Team2Score.ToString();
+
     var currentStatus = (int[])game.Occupations.Clone();
     for (int i = 0; i < game.PlayerPositions.Length; i++)
     {
