@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
@@ -17,8 +16,10 @@ public class Game
     get;
     private set;
   }
-  public static TimeSpan Duration = TimeSpan.FromSeconds(30);
-  public static TimeSpan StandbyDuration = TimeSpan.FromSeconds(3);
+  public static int DurationSeconds = 60;
+  public static TimeSpan Duration = TimeSpan.FromSeconds(DurationSeconds);
+  public static int StandbyDurationSeconds = 3;
+  public static TimeSpan StandbyDuration = TimeSpan.FromSeconds(StandbyDurationSeconds);
   public static TimeSpan StepInterval = TimeSpan.FromMilliseconds(500);
   public enum GameStatus
   {

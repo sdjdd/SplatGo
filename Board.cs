@@ -38,23 +38,39 @@ public partial class Board : Node2D
 
     BindNodes();
 
-
     game.Bind(new IObservable<int>[] {
       keyMoveController1.Moves,
         keyMoveController2.Moves,
-    }).Select((moveStream, i) => moveStream.FirstAsync().Subscribe(_ => CallDeferred("HideHintDeferred", i))).ToArray();
+    }).Select((moveStream, i) => moveStream.FirstAsync().Subscribe(_ => CallDeferred("HideHint", i))).ToArray();
 
     // TODO: implement 准备阶段
     game.Start();
+
+    // (3) 2 1 59 58 57 ... 1 0
+    var CountDownNumbers = Observable
+      .Interval(TimeSpan.FromSeconds(1))
+      .Take(Game.StandbyDurationSeconds - 1)
+      .Select(i => Game.StandbyDurationSeconds - i - 1)
+      .Concat(Observable
+        .Interval(TimeSpan.FromSeconds(1))
+        .Take(Game.DurationSeconds + 1)
+        .Select(i => Game.DurationSeconds - i)
+      );
+    CountDownNumbers.Subscribe(i => CallDeferred("UpdateCountDown", i));
   }
 
-  private void HideHintDeferred(int i)
+  private void HideHint(int i)
   {
     var hint = GetNode<Control>($"VBoxContainer/Board/CtrHints{i}");
     if (hint != null)
     {
       hint.Visible = false;
     }
+  }
+
+  private void UpdateCountDown(long i)
+  {
+    TimerNode.Text = i.ToString();
   }
 
   private Label TimerNode;
