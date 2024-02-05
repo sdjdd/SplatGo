@@ -79,7 +79,7 @@ public class Game
             trimmedInput
             .SkipWhile(move => move == 0)
             .FirstAsync()
-            .Concat(Observable.Interval(TimeSpan.FromMilliseconds(500)).Select(_ => (int)1))
+            .Concat(Observable.Interval(StepInterval).Select(_ => (int)1))
           ).TakeUntil(move => move == 0).Subscribe(observer))
         .Repeat(); // 当序列完成时（即遇到了0），使用Repeat操作符重新订阅源序列
       sampledMoves.Subscribe(move => Move(i, move));
@@ -87,7 +87,7 @@ public class Game
     }).ToArray();
   }
 
-  public async void Start()
+  public async Task Start()
   {
     Status = GameStatus.Standby;
     await Task.Delay(StandbyDuration);

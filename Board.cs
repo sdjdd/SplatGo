@@ -2,6 +2,7 @@ using Godot;
 using System;
 using System.Linq;
 using System.Reactive.Linq;
+using System.Threading.Tasks;
 using static KeyMove;
 
 public partial class Board : Node2D
@@ -9,6 +10,7 @@ public partial class Board : Node2D
   private const int Size = 13; // 棋盘大小
   private const int CellSize = 46; // 每个单元格的像素大小
   private const int BorderSize = 2; // 边框大小
+  private const int ViewportWidth = 626;
 
   private static Color ColorA = new(0xa9dbdeff);
   private static Color ColorB = new(0xfad0b1ff);
@@ -42,26 +44,37 @@ public partial class Board : Node2D
       keyMoveController1.Moves,
         keyMoveController2.Moves,
     }).Select((moveStream, i) => moveStream.FirstAsync().Subscribe(_ => CallDeferred("HideHint", i))).ToArray();
+  }
 
-    // TODO: implement 准备阶段
-    game.Start();
+  private async void Start()
+  {
+    GD.Print("Game start");
 
-    // (3) 2 1 59 58 57 ... 1 0
+    StartBtn.Visible = false;
+    StartBtn.Text = "Restart";
+
+    // 3 2 1 59 58 57 ... 1 0
     var CountDownNumbers = Observable
       .Interval(TimeSpan.FromSeconds(1))
       .Take(Game.StandbyDurationSeconds - 1)
       .Select(i => Game.StandbyDurationSeconds - i - 1)
+      .StartWith(Game.StandbyDurationSeconds)
       .Concat(Observable
         .Interval(TimeSpan.FromSeconds(1))
         .Take(Game.DurationSeconds + 1)
         .Select(i => Game.DurationSeconds - i)
       );
     CountDownNumbers.Subscribe(i => CallDeferred("UpdateCountDown", i));
+
+    game.Reset();
+    await game.Start();
+
+    StartBtn.SetDeferred("visible", true);
   }
 
   private void HideHint(int i)
   {
-    var hint = GetNode<Control>($"VBoxContainer/Board/CtrHints{i}");
+    var hint = GetNode<Control>($"Container/Board/CtrHints{i}");
     if (hint != null)
     {
       hint.Visible = false;
@@ -76,11 +89,19 @@ public partial class Board : Node2D
   private Label TimerNode;
   private Label Team1ScoreNode;
   private Label Team2ScoreNode;
+  private Control Team1ScoreBarNode;
+  private Control Team2ScoreBarNode;
+  private Button StartBtn;
   private void BindNodes()
   {
-    TimerNode = GetNode<Label>("VBoxContainer/HBoxContainer/Timer");
-    Team1ScoreNode = GetNode<Label>("VBoxContainer/HBoxContainer/Team1Score");
-    Team2ScoreNode = GetNode<Label>("VBoxContainer/HBoxContainer/Team2Score");
+    TimerNode = GetNode<Label>("Container/Timer");
+    Team1ScoreBarNode = GetNode<Control>("Container/ScoreBoard/Team1");
+    Team2ScoreBarNode = GetNode<Control>("Container/ScoreBoard/Team2");
+    Team1ScoreNode = GetNode<Label>("Container/ScoreBoard/Team1/Bar/Score");
+    Team2ScoreNode = GetNode<Label>("Container/ScoreBoard/Team2/Bar/Score");
+    StartBtn = GetNode<Button>("Container/Board/StartBtn");
+
+    StartBtn.Pressed += Start;
   }
 
   // Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -103,7 +124,7 @@ public partial class Board : Node2D
       Size = new Vector2(boardWidth, boardWidth),
       Color = new Color(1, 1, 1, (float)0.6)
     };
-    var boardNode = GetNode<Control>("VBoxContainer/Board");
+    var boardNode = GetNode<Control>("Container/Board/Cells");
 
     boardNode.AddChild(background);
 
@@ -132,7 +153,10 @@ public partial class Board : Node2D
 
   private void Paint(Game game)
   {
+    Team1ScoreBarNode.Size = new Vector2((ViewportWidth - 60) * game.Team1Score / (Size * Size) + 30, Team1ScoreBarNode.Size.Y);
     Team1ScoreNode.Text = game.Team1Score.ToString();
+    Team2ScoreBarNode.Size = new Vector2((ViewportWidth - 60) * game.Team2Score / (Size * Size) + 30, Team2ScoreBarNode.Size.Y);
+    Team2ScoreBarNode.Position = new Vector2(ViewportWidth - Team2ScoreBarNode.Size.X, Team2ScoreBarNode.Position.Y);
     Team2ScoreNode.Text = game.Team2Score.ToString();
 
     var currentStatus = (int[])game.Occupations.Clone();
