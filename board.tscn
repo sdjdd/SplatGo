@@ -146,6 +146,7 @@ grow_vertical = 2
 
 [node name="S" type="Label" parent="Container/Board/CtrHints0"]
 custom_minimum_size = Vector2(46, 46)
+layout_mode = 0
 offset_left = -23.0
 offset_top = 24.0
 offset_right = 23.0
@@ -157,6 +158,7 @@ vertical_alignment = 1
 
 [node name="D" type="Label" parent="Container/Board/CtrHints0"]
 custom_minimum_size = Vector2(46, 46)
+layout_mode = 0
 offset_left = 25.0
 offset_top = -23.0
 offset_right = 71.0
@@ -168,6 +170,7 @@ vertical_alignment = 1
 
 [node name="A" type="Label" parent="Container/Board/CtrHints0"]
 custom_minimum_size = Vector2(46, 46)
+layout_mode = 0
 offset_left = -71.0
 offset_top = -23.0
 offset_right = -25.0
@@ -180,6 +183,7 @@ vertical_alignment = 1
 
 [node name="W" type="Label" parent="Container/Board/CtrHints0"]
 custom_minimum_size = Vector2(46, 46)
+layout_mode = 0
 offset_left = -22.0
 offset_top = -70.0
 offset_right = 24.0
@@ -206,6 +210,7 @@ grow_vertical = 2
 
 [node name="S" type="Label" parent="Container/Board/CtrHints1"]
 custom_minimum_size = Vector2(46, 46)
+layout_mode = 0
 offset_left = -23.0
 offset_top = 24.0
 offset_right = 23.0
@@ -217,6 +222,7 @@ vertical_alignment = 1
 
 [node name="D" type="Label" parent="Container/Board/CtrHints1"]
 custom_minimum_size = Vector2(46, 46)
+layout_mode = 0
 offset_left = 25.0
 offset_top = -23.0
 offset_right = 71.0
@@ -228,6 +234,7 @@ vertical_alignment = 1
 
 [node name="A" type="Label" parent="Container/Board/CtrHints1"]
 custom_minimum_size = Vector2(46, 46)
+layout_mode = 0
 offset_left = -71.0
 offset_top = -23.0
 offset_right = -25.0
@@ -240,6 +247,7 @@ vertical_alignment = 1
 
 [node name="W" type="Label" parent="Container/Board/CtrHints1"]
 custom_minimum_size = Vector2(46, 46)
+layout_mode = 0
 offset_left = -22.0
 offset_top = -70.0
 offset_right = 24.0
