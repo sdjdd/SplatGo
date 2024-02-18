@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
@@ -179,7 +180,7 @@ public class Game
         var occupationChanges = UpdateOccupation(playerId, newPosition);
         if (occupationChanges)
         {
-            FillClosedArea(newPosition);
+            FillClosedArea(newX, newY, Size, Size, playerId);
             CalculateScore();
             CheckVictory();
         }
@@ -194,9 +195,68 @@ public class Game
         return previousOccupation != newOccupation;
     }
 
-    private void FillClosedArea(int startPoint)
+    private void FillClosedArea(int x, int y, int width, int height, int playerId)
     {
-        // TODO: implement FillClosedArea
+        int color = playerId % 2 == 0 ? 1 : -1;
+        TryToFillClosedArea(x - 1, y, width, height, color);
+        TryToFillClosedArea(x + 1, y, width, height, color);
+        TryToFillClosedArea(x, y - 1, width, height, color);
+        TryToFillClosedArea(x, y + 1, width, height, color);
+    }
+
+    private void TryToFillClosedArea(int x, int y, int width, int height, int color)
+    {
+        if (x < 0 || x >= width || y < 0 || y >= height)
+        {
+            return;
+        }
+
+        Queue<(int, int)> points = new();
+        HashSet<(int, int)> inside = new();
+        points.Enqueue((x, y));
+        while (points.Count > 0)
+        {
+            var point = points.Dequeue();
+            var (cx, cy) = point;
+            if (Occupations[EncodePosition(cx, cy, width)] == color)
+            {
+                continue;
+            }
+            if (cx == 0 || cx == width - 1 || cy == 0 || cy == height - 1)
+            {
+                return;
+            }
+            if (inside.Contains(point))
+            {
+                continue;
+            }
+            inside.Add(point);
+            if (cx > 0)
+            {
+                points.Enqueue((cx - 1, cy));
+            }
+            if (cx < width - 1)
+            {
+                points.Enqueue((cx + 1, cy));
+            }
+            if (cy > 0)
+            {
+                points.Enqueue((cx, cy - 1));
+            }
+            if (cy < height - 1)
+            {
+                points.Enqueue((cx, cy + 1));
+            }
+        }
+
+        foreach (var (cx, cy) in inside)
+        {
+            var pos = EncodePosition(cx, cy, width);
+            if (!PlayerPositions.Contains(pos))
+            {
+                Occupations[pos] = color;
+            }
+        }
     }
 
     private void CalculateScore()
